@@ -1,11 +1,13 @@
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 
-public class Bouquet implements /*Externalizable ,*/ Serializable {
+public class Bouquet implements Serializable {
     private static final String FILE = "prices";
     private Flower[] flowers;
+    private final boolean xml; //== false - r/w to JSON
+
+    public Bouquet(boolean toXml) {
+        xml = toXml;
+    }
 
     public void addFlowers(Flower...flowers) {
         this.flowers = flowers;
@@ -18,22 +20,42 @@ public class Bouquet implements /*Externalizable ,*/ Serializable {
         }
     }
 
-/*    void writeObject(boolean toXML) {
+    private void writeObject(ObjectOutputStream stream) throws IOException {
         if (flowers == null) return;
-        new RWObj().write(toXML, flowers);
-        *//*try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE, false))) {
-            oos.writeObject(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*//*
-    }*/
+        new RWObj().write(xml, flowers);
+    }
 
-   /* public Flower[] readObject(boolean fromXML) {
-        Object[] objects = new RWObj().read(fromXML);
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        Object[] objects = new RWObj().read(xml);
         flowers = new Flower[objects.length];
         for (int i=0; i<objects.length; i++) {
             flowers[i] = (Flower) objects[i];
         }
-        return flowers;
-    }*/
+    }
+
+    public static void main(String[] args) {
+        Flower rose1 = new Flower("rose", "red", 40);
+        Flower rose2 = new Flower("rose", "blue", 100);
+        Flower pink = new Flower("pink", "purple", 18);
+        Flower tulip = new Flower("tulip", "yellow", 23);
+        Bouquet bouquet1 = new Bouquet(true);
+        bouquet1.addFlowers(tulip, pink, rose1, rose2);
+        Bouquet bouquet2 = new Bouquet(false);
+        bouquet2.addFlowers(rose1, rose1, pink);
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE))) {
+            System.out.println("R/W to XML:");
+            oos.writeObject(bouquet1);
+            ObjectInputStream oin = new ObjectInputStream(new FileInputStream(FILE));
+            Bouquet bouquetFromFile = (Bouquet) oin.readObject();
+            bouquetFromFile.showFlowers();
+
+            System.out.println("\nR/W to JSON:");
+            oos.writeObject(bouquet2);
+            bouquetFromFile = (Bouquet) oin.readObject();
+            bouquetFromFile.showFlowers();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -33,17 +33,15 @@ public class RWObj {
             for (Object o : objects) {
                 pw.println("\t<" + o.getClass().getSimpleName() + ">");
                 Field[] fields = o.getClass().getDeclaredFields();
-                for (int i = 0; i < fields.length; i++) {
-                    fields[i].setAccessible(true);
-                    String fieldName = fields[i].getName();
-                    pw.println(XML_PARAM_BEGIN + fieldName + ">" + fields[i].get(o) + "</" + fieldName + ">");
+                for (Field field : fields) {
+                    field.setAccessible(true);
+                    String fieldName = field.getName();
+                    pw.println(XML_PARAM_BEGIN + fieldName + ">" + field.get(o) + "</" + fieldName + ">");
                 }
                 pw.println(XML_OBJ_END + o.getClass().getSimpleName() + ">");
             }
             pw.println("</" + objects[0].getClass().getSimpleName() + "s>");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (IOException | IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -73,9 +71,7 @@ public class RWObj {
             }
             pw.println("}");
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (IOException | IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -83,61 +79,51 @@ public class RWObj {
     public Object[] read(boolean fromXML) {
         if (fromXML) {
             return read();
-        } else {
-            try {
-                List<String> lines = Files.readAllLines(Paths.get(JSON_FILE), StandardCharsets.UTF_8);
-                if (lines.size() > NUM_SERV_REC) {
-                    objects = new Object[lines.size() - NUM_SERV_REC];
-                } else {
-                    System.out.println("No data!");
-                    return null;
-                }
-                int countObj = 0;
-                for (int i = 0; i < lines.size(); i++) {
-                    String s = lines.get(i);
-                    if (s.contains(JSON_OBJ_BEGIN) && !s.contains(JSON_PARAM_BEGIN)) {
-                        countObj++;
-                    }
-                }
-                if (countObj == 0) return null;
-                objects = new Object[countObj];
-                for (int i = 0, j = 0; j < countObj; ) {
-                    String s = lines.get(i);
-                    if (s.contains(JSON_OBJ_BEGIN) && !s.contains(JSON_PARAM_BEGIN)) {
-                        String objClass = s.substring(JSON_OBJ_BEGIN.length(), s.indexOf("\":"));
-                        objects[j] = Class.forName(objClass).newInstance();
-                        s = lines.get(++i);
-                        while (s.contains(JSON_PARAM_BEGIN)) {
-                            String fieldName = s.substring(JSON_PARAM_BEGIN.length(), s.indexOf("\":"));
-                            Field field = objects[j].getClass().getDeclaredField(fieldName);
-                            field.setAccessible(true);
-                            String param = s.substring(s.indexOf("\": \"") + ("\": \"").length(), s.lastIndexOf("\""));
-                            try {
-                                field.set(objects[j], param);
-                            } catch (IllegalArgumentException iae) {
-                                field.set(objects[j], Double.parseDouble(param)); //
-                            }
-                            s = lines.get(++i);
-                        }
-                        j++;
-                    } else i++;
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
+        }
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(JSON_FILE), StandardCharsets.UTF_8);
+            if (lines.size() > NUM_SERV_REC) {
+                objects = new Object[lines.size() - NUM_SERV_REC];
+            } else {
+                System.out.println("No data!");
+                return null;
             }
+            int countObj = 0;
+            for (String s : lines) {
+                if (s.contains(JSON_OBJ_BEGIN) && !s.contains(JSON_PARAM_BEGIN)) {
+                    countObj++;
+                }
+            }
+            if (countObj == 0) return null;
+            objects = new Object[countObj];
+            for (int i = 0, j = 0; j < countObj; ) {
+                String s = lines.get(i);
+                if (s.contains(JSON_OBJ_BEGIN) && !s.contains(JSON_PARAM_BEGIN)) {
+                    String objClass = s.substring(JSON_OBJ_BEGIN.length(), s.indexOf("\":"));
+                    objects[j] = Class.forName(objClass).newInstance();
+                    s = lines.get(++i);
+                    while (s.contains(JSON_PARAM_BEGIN)) {
+                        String fieldName = s.substring(JSON_PARAM_BEGIN.length(), s.indexOf("\":"));
+                        Field field = objects[j].getClass().getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        String param = s.substring(s.indexOf("\": \"") + ("\": \"").length(), s.lastIndexOf("\""));
+                        try {
+                            field.set(objects[j], param);
+                        } catch (IllegalArgumentException iae) {
+                            field.set(objects[j], Double.parseDouble(param)); //
+                        }
+                        s = lines.get(++i);
+                    }
+                    j++;
+                } else i++;
+            }
+        } catch (IllegalAccessException | IOException | InstantiationException | NoSuchFieldException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
         return objects;
     }
 
-    public Object[] read() {
+    private Object[] read() {
         int countObj = 0;
         try {
             List<String> lines = Files.readAllLines(Paths.get(XML_FILE), StandardCharsets.UTF_8);
@@ -147,9 +133,8 @@ public class RWObj {
                 System.out.println("No data!");
                 return null;
             }
-            for(int i=0; i<lines.size(); i++) {
-                String s = lines.get(i);
-                if(s.contains(XML_OBJ_END)) {
+            for (String s : lines) {
+                if (s.contains(XML_OBJ_END)) {
                     countObj++;
                 }
             }
@@ -177,15 +162,7 @@ public class RWObj {
                 } else i++;
 
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
+        } catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
             e.printStackTrace();
         }
         return objects;
