@@ -9,7 +9,7 @@ public class Flower implements Serializable {
         this.color = color;
         this.price = price;
     }
-    public Flower() {
+    public Flower() {   //do not remove
         name = "defName";
         color = "defColor";
         price = -1;

@@ -2,8 +2,8 @@ import java.io.*;
 
 public class Bouquet implements Serializable {
     private static final String FILE = "prices";
+    private static boolean xml = true; //== false - r/w to JSON
     private Flower[] flowers;
-    private final boolean xml; //== false - r/w to JSON
 
     public Bouquet(boolean toXml) {
         xml = toXml;
@@ -33,26 +33,11 @@ public class Bouquet implements Serializable {
         }
     }
 
-    public static void main(String[] args) {
-        Flower rose1 = new Flower("rose", "red", 40);
-        Flower rose2 = new Flower("rose", "blue", 100);
-        Flower pink = new Flower("pink", "purple", 18);
-        Flower tulip = new Flower("tulip", "yellow", 23);
-        Bouquet bouquet1 = new Bouquet(true);
-        bouquet1.addFlowers(tulip, pink, rose1, rose2);
-        Bouquet bouquet2 = new Bouquet(false);
-        bouquet2.addFlowers(rose1, rose1, pink);
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE))) {
-            System.out.println("R/W to XML:");
-            oos.writeObject(bouquet1);
-            ObjectInputStream oin = new ObjectInputStream(new FileInputStream(FILE));
+    public void serialize() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE))) { //replace with another stream?
+            oos.writeObject(this);
+            ObjectInputStream oin = new ObjectInputStream(new FileInputStream(FILE)); //replace with another stream?
             Bouquet bouquetFromFile = (Bouquet) oin.readObject();
-            bouquetFromFile.showFlowers();
-
-            System.out.println("\nR/W to JSON:");
-            oos.writeObject(bouquet2);
-            bouquetFromFile = (Bouquet) oin.readObject();
             bouquetFromFile.showFlowers();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
