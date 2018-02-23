@@ -110,7 +110,7 @@ public class RWObj {
                         try {
                             field.set(objects[j], param);
                         } catch (IllegalArgumentException iae) {
-                            field.set(objects[j], Double.parseDouble(param)); //
+                            field.set(objects[j], Double.parseDouble(param)); //not very good
                         }
                         s = lines.get(++i);
                     }
@@ -154,7 +154,7 @@ public class RWObj {
                         try {
                             field.set(objects[j], param);
                         } catch (IllegalArgumentException iae) {
-                            field.set(objects[j], Double.parseDouble(param));
+                            field.set(objects[j], Double.parseDouble(param));   //not very good
                         }
                         s = lines.get(++i);
                     }
